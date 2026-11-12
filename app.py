@@ -1,32 +1,27 @@
 from dash import Dash, html, dcc, Input, Output
 import plotly.express as px
-import pandas as pd
 
-# 1. Mock street data for Mason City, Iowa (Coordinates centered around Mason City)
-data = {
-    "Street": [
-        "Federal Ave", 
-        "State St", 
-        "1st St SE", 
-        "Southbridge Dr", 
-        "Kossuth St", 
-        "Monroe Ave", 
-        "CGW Railroad / 19th St SW"
-    ],
-    "Lat": [43.1536, 43.1512, 43.1525, 43.1430, 43.1590, 43.1480, 43.1360],
-    "Lon": [-93.2010, -93.2015, -93.1990, -93.2050, -93.2100, -93.1950, -93.2200],
-    "Description": [
-        "Major north-south downtown thoroughfare",
-        "Historic downtown corridor",
-        "Heart of downtown near cultural sites",
-        "Commercial and shopping area near the mall",
-        "Residential and local connector",
-        "East side neighborhood road",
-        "Southwest industrial / transit area"
-    ]
-}
-
-df = pd.DataFrame(data)
+# 1. Pure Python lists for Mason City data (No pandas/numpy required!)
+streets = [
+    "Federal Ave", 
+    "State St", 
+    "1st St SE", 
+    "Southbridge Dr", 
+    "Kossuth St", 
+    "Monroe Ave", 
+    "CGW Railroad / 19th St SW"
+]
+lats = [43.1536, 43.1512, 43.1525, 43.1430, 43.1590, 43.1480, 43.1360]
+lons = [-93.2010, -93.2015, -93.1990, -93.2050, -93.2100, -93.1950, -93.2200]
+descriptions = [
+    "Major north-south downtown thoroughfare",
+    "Historic downtown corridor",
+    "Heart of downtown near cultural sites",
+    "Commercial and shopping area near the mall",
+    "Residential and local connector",
+    "East side neighborhood road",
+    "Southwest industrial / transit area"
+]
 
 # 2. Initialize the Dash app
 app = Dash(__name__)
@@ -43,7 +38,7 @@ app.layout = html.Div(
         html.Label("Search or Select Street:"),
         dcc.Dropdown(
             id="street-dropdown",
-            options=[{"label": s, "value": s} for s in df["Street"]],
+            options=[{"label": s, "value": s} for s in streets],
             value=None,
             placeholder="Type a street name (e.g., Federal Ave)...",
             clearable=True,
@@ -61,32 +56,39 @@ app.layout = html.Div(
     Input("street-dropdown", "value")
 )
 def update_map(selected_street):
-    # Filter dataframe if a street is selected, otherwise show all
     if selected_street:
-        filtered_df = df[df["Street"] == selected_street]
+        idx = streets.index(selected_street)
+        f_streets = [streets[idx]]
+        f_lats = [lats[idx]]
+        f_lons = [lons[idx]]
+        f_descs = [descriptions[idx]]
         zoom_level = 15
     else:
-        filtered_df = df
+        f_streets = streets
+        f_lats = lats
+        f_lons = lons
+        f_descs = descriptions
         zoom_level = 12
 
-    # Build a scatter mapbox graph using open-source OpenStreetMap tiles
+    # Build scatter mapbox using pure lists
     fig = px.scatter_mapbox(
-        filtered_df,
-        lat="Lat",
-        lon="Lon",
-        hover_name="Street",
-        hover_data=["Description"],
+        lat=f_lats,
+        lon=f_lons,
+        hover_name=f_streets,
+        custom_data=[f_descs],
         zoom=zoom_level,
         height=500
     )
     
-    # Use standard open-source layout styling so no Mapbox token is required
+    fig.update_traces(
+        hovertemplate="<b>%{hovername}</b><br>%{customdata[0]}<extra></extra>"
+    )
+    
     fig.update_layout(
         mapbox_style="open-street-map",
         margin={"r": 0, "t": 0, "l": 0, "b": 0}
     )
     
-    # Center map over Mason City, Iowa coordinates if nothing selected
     if not selected_street:
         fig.update_layout(
             mapbox_center={"lat": 43.1536, "lon": -93.2010}
@@ -94,6 +96,5 @@ def update_map(selected_street):
         
     return fig
 
-# 5. Run local server if executed directly
 if __name__ == "__main__":
     app.run(debug=True)
