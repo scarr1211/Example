@@ -23,9 +23,9 @@ descriptions = [
     "Southwest industrial / transit area"
 ]
 
-# 2. Initialize the Dash app
+# 2. Initialize the Dash app and expose the Flask server
 app = Dash(__name__)
-server = app.server  # Required for Render deployment
+server = app.server  # <--- This is what Gunicorn needs to call!
 
 # 3. Design the layout
 app.layout = html.Div(
@@ -74,7 +74,6 @@ def update_map(selected_street):
         center_lat = 43.1536
         center_lon = -93.2010
 
-    # Build figure using pure plotly.graph_objects (No pandas required)
     fig = go.Figure(
         go.Scattermapbox(
             lat=f_lats,
