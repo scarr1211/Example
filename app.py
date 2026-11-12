@@ -1,7 +1,7 @@
 from dash import Dash, html, dcc, Input, Output
-import plotly.express as px
+import plotly.graph_objects as go
 
-# 1. Pure Python lists for Mason City data (No pandas/numpy required!)
+# 1. Pure Python lists for Mason City data
 streets = [
     "Federal Ave", 
     "State St", 
@@ -63,36 +63,40 @@ def update_map(selected_street):
         f_lons = [lons[idx]]
         f_descs = [descriptions[idx]]
         zoom_level = 15
+        center_lat = f_lats[0]
+        center_lon = f_lons[0]
     else:
         f_streets = streets
         f_lats = lats
         f_lons = lons
         f_descs = descriptions
         zoom_level = 12
+        center_lat = 43.1536
+        center_lon = -93.2010
 
-    # Build scatter mapbox using pure lists
-    fig = px.scatter_mapbox(
-        lat=f_lats,
-        lon=f_lons,
-        hover_name=f_streets,
-        custom_data=[f_descs],
-        zoom=zoom_level,
-        height=500
-    )
-    
-    fig.update_traces(
-        hovertemplate="<b>%{hovername}</b><br>%{customdata[0]}<extra></extra>"
+    # Build figure using pure plotly.graph_objects (No pandas required)
+    fig = go.Figure(
+        go.Scattermapbox(
+            lat=f_lats,
+            lon=f_lons,
+            mode="markers+text",
+            marker=dict(size=14, color="#e74c3c"),
+            text=f_streets,
+            textposition="top right",
+            customdata=f_descs,
+            hovertemplate="<b>%{text}</b><br>%{customdata}<extra></extra>"
+        )
     )
     
     fig.update_layout(
         mapbox_style="open-street-map",
-        margin={"r": 0, "t": 0, "l": 0, "b": 0}
+        mapbox=dict(
+            center=dict(lat=center_lat, lon=center_lon),
+            zoom=zoom_level
+        ),
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
+        height=500
     )
-    
-    if not selected_street:
-        fig.update_layout(
-            mapbox_center={"lat": 43.1536, "lon": -93.2010}
-        )
         
     return fig
 
